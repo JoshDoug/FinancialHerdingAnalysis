@@ -4,11 +4,11 @@ Simple program to process and analyse financial data for herding.
 
 ## Main formula - Herding Formula
 
-![Herding Formula](herding-formula.png "Herding Formula")
+![Herding Formula](assets/herding-formula.png "Herding Formula")
 
 ## Secondary Formula - Adjustment Factor Formula
 
-![Adjustment Factor Formula](adjustment-factor-formula.png "Adjustment Factor Formula")
+![Adjustment Factor Formula](assets/adjustment-factor-formula.png "Adjustment Factor Formula")
 
 ## Process
 
