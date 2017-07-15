@@ -32,3 +32,12 @@ Walkthrough of how data makes it way through the formula.
 ## Installing and running the program
 
 Windows/macOS/Linux?
+
+Windows:
+
+Install R, then RStudio, open RStudio and choose File > New Project and select Version Control, Git. Then just provide the repo URL from GitHub (`https://` not `git://`) I think.
+
+* [R language](https://www.r-project.org/)
+* [RStudio](https://www.rstudio.com/)
+
+## [Code Style Guide](https://google.github.io/styleguide/Rguide.xml)
