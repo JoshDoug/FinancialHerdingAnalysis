@@ -53,21 +53,21 @@ for(i in institutionLevels) {
 securityBS <- walkSecurityInstance(securityInstance, securityTemplateBS)
 securityBS
 
-# Get B for a security of an institution
+# Get B and S for a security of a single institution
 walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
-  securityBS <- securityTemplateBS
-  trimmedInstance <- securityInstance[, 3:4] # could be trimmed earlier, not really necessary to trim at all
+  securityBS <- securityTemplateBS # Create new object copy of template - don't want to alter original template
+  trimmedInstance <- securityInstance[, 3:4] # could be trimmed earlier, not *really* necessary to trim at all
   print(trimmedInstance)
   
-  yearCompare <- trimmedInstance[1,1] # holds the value of the prior hear to compare against, is reset at end of loop to the latest year
+  yearCompare <- trimmedInstance[1,"SharesHeld"] # holds the value of the prior year to compare against, is reset at end of loop to the latest year
   firstDate <- trimmedInstance[1,"ReportDate"] # holds the first date
   
   rowIndex <- NA
   # Get first indiced of date to use in template for setting B or S
   # rowIndex is the current date +1 in the template, which may be a bit confusing
   # alternative is set 0 or not add 1 and then increment at start of loop
-  if(firstDate == "20061231") {
-    print("First date!") # This is the first possible date in the dataset, perhaps not good to hardcode... TODO - remove hardcoded date
+  if(firstDate == quarterDates[1]) {
+    print("First date!") # This is the first possible date in the dataset - relies on quarterDates vector being global
     rowIndex <- 1
   } else {
     print("Security data starts after 2006")
