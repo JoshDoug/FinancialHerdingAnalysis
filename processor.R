@@ -1,43 +1,28 @@
 # Program to process and analyse financial data for herding
 
-## Read in CSV Data
+# Read in CSV Data
 iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # This is a data frame
-str(iss.csv) # Show structure (str)
 
-# Consolidate institutions into unique list - useful for looping through
+# Set up data
+
+## Consolidate institutions into unique list - useful for looping through
 institutions <- factor(iss.data$InstitutionID)
 institutionLevels <- levels(institutions)
 
-# Consolidate security tickers into unique list
+## Consolidate security tickers into unique list
 securities <- factor(iss.data$SecurityTicker)
 securityTickerLevels <- levels(securities)
 
-# Get dates and convert into date format - not necessary but may be useful
+## Get dates can be converted into date format if needed
 dates <- factor(iss.data$ReportDate)
 dateLevels <- levels(dates)
-
-quarterDates <- dateLevels
+quarterDates <- dateLevels # Currently just leave as Strings
 # quarterDates <- as.Date(dateLevels, "%Y%m%d") # Convert into date objects - might cause more issues actually
+# dateFormat <- format(quarterDates, "%Y%b%d") # Not used, just an example of formatting a date
 
-dateFormat <- format(quarterDates, "%Y%b%d") # Not used, just an example of formating a date
-
-# Create a template data.frame to hold B or S for each security per institution - then add together after
-# Currently need a data.frame for B and another for S...could consolidate into a single data.frame?
+# Create a template data.frame to hold B and S for each security per institution - then add together after
 securityTemplateBS <- data.frame(B = rep(0, times = length(quarterDates)), S = rep(0, times = length(quarterDates)), quarter = quarterDates)
-# securityChangeHold[[4,1]] # Test to access data in 4th row of first column
-# securityChangeHold[[4,1]] <- 1 # Test to alter field in 4th row of first column
-
-# Remove first row as it is unused for B and S
-securityTemplateBS <- securityTemplateBS[-1,]
-securityTemplateBS 
-
-
-
-# Quick test to see if new object is created or reference (new object! so altering it doesn't alter the original)
-testSecTemplate <- securityTemplateBS
-# testSecTemplate[5,1] <- 5 # Change row 5 column 1 field value to 5
-testSecTemplate[5,] # Return row 5, all 3 columns - don't need to set to return the row
-testSecTemplate
+securityTemplateBS <- securityTemplateBS[-1,] # Remove first row as it is unused for B and S
 
 # This will form the main loop which will work through each security and delegate specific parts to other functions
 for(i in securityTickerLevels) {
@@ -68,13 +53,6 @@ for(i in institutionLevels) {
 securityBS <- walkSecurityInstance(securityInstance, securityTemplateBS)
 securityBS
 
-# Test to get date of 5th row
-dateTest <- securityInstance[5, "ReportDate"]
-dateTest
-# Get index of same date in template
-dateTemplateIndice <- which(securityTemplateBS$quarter == dateTest) + 1
-dateTemplateIndice
-
 # Get B for a security of an institution
 walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
   securityBS <- securityTemplateBS
@@ -82,7 +60,7 @@ walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
   print(trimmedInstance)
   
   yearCompare <- trimmedInstance[1,1] # holds the value of the prior hear to compare against, is reset at end of loop to the latest year
-  firstDate <- trimmedInstance[1,2] # holds the first date
+  firstDate <- trimmedInstance[1,"ReportDate"] # holds the first date
   
   rowIndex <- NA
   # Get first indiced of date to use in template for setting B or S
@@ -111,7 +89,6 @@ walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
     print(i)
     rowIndex <- rowIndex + 1
   }
-  
   securityBS
 }
 
