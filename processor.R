@@ -54,12 +54,9 @@ getSecurityBS <- function(securityTemplateBS) {
     if(length(securityInstanceIndices) != 0) {
       print(i)
       securityInstance <- dataSubset[securityInstanceIndices, ]
-      #print(securityInstance)
-      BSFORALL <- walkSecurityInstance(securityInstance, securityTemplateBS)
-      print(BSFORALL)
-      securityTotalBS$B <- securityTotalBS$B + BSFORALL$B
-      securityTotalBS$S <- securityTotalBS$S + BSFORALL$S
-      #print(securityTotalBS)
+      securityTempBS <- walkSecurityInstance(securityInstance, securityTemplateBS)
+      securityTotalBS$B <- securityTotalBS$B + securityTempBS$B
+      securityTotalBS$S <- securityTotalBS$S + securityTempBS$S
     }
   }
   return(securityTotalBS)
@@ -78,10 +75,10 @@ walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
   # rowIndex is the current date +1 in the template, which may be a bit confusing
   # alternative is set 0 or not add 1 and then increment at start of loop
   if(firstDate == quarterDates[1]) {
-    print("First date!") # This is the first possible date in the dataset - relies on quarterDates vector being global
+    #print("First date!") # This is the first possible date in the dataset - relies on quarterDates vector being global
     rowIndex <- 1
   } else {
-    print("Security data starts after 2006")
+    #print("Security data starts after 2006")
     rowIndex <- which(securityTemplateBS$quarter == firstDate) + 1
   }
   
