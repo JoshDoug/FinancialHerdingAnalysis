@@ -15,7 +15,9 @@ securityTickerLevels <- levels(securities)
 # Get dates and convert into date format - not necessary but may be useful
 dates <- factor(iss.data$ReportDate)
 dateLevels <- levels(dates)
-quarterDates <- as.Date(dateLevels, "%Y%m%d") # Convert into date objects
+
+quarterDates <- dateLevels
+# quarterDates <- as.Date(dateLevels, "%Y%m%d") # Convert into date objects - might cause more issues actually
 
 dateFormat <- format(quarterDates, "%Y%b%d") # Not used, just an example of formating a date
 
@@ -24,7 +26,12 @@ dateFormat <- format(quarterDates, "%Y%b%d") # Not used, just an example of form
 securityTemplateBS <- data.frame(B = rep(0, times = length(quarterDates)), S = rep(0, times = length(quarterDates)), quarter = quarterDates)
 # securityChangeHold[[4,1]] # Test to access data in 4th row of first column
 # securityChangeHold[[4,1]] <- 1 # Test to alter field in 4th row of first column
-securityTemplateBS
+
+# Remove first row as it is unused for B and S
+securityTemplateBS <- securityTemplateBS[-1,]
+securityTemplateBS 
+
+
 
 # Quick test to see if new object is created or reference (new object! so altering it doesn't alter the original)
 testSecTemplate <- securityTemplateBS
@@ -49,10 +56,62 @@ indices <- which(iss.data$SecurityTicker == "UNP")
 dataSubset <- iss.data[indices, ]
 dataSubset
 
+securityInstanceIndices <- which(dataSubset$InstitutionID == "000W5D-E")
+securityInstance <- dataSubset[securityInstanceIndices, ]
+securityInstance
+
 for(i in institutionLevels) {
   print(i)
   # which(iss.data$InstitutionID == i & iss.data$SecurityTicker == "UNP") # might not work well
 }
 
+securityBS <- walkSecurityInstance(securityInstance, securityTemplateBS)
+securityBS
 
+# Test to get date of 5th row
+dateTest <- securityInstance[5, "ReportDate"]
+dateTest
+# Get index of same date in template
+dateTemplateIndice <- which(securityTemplateBS$quarter == dateTest) + 1
+dateTemplateIndice
+
+# Get B for a security of an institution
+walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
+  securityBS <- securityTemplateBS
+  trimmedInstance <- securityInstance[, 3:4] # could be trimmed earlier, not really necessary to trim at all
+  print(trimmedInstance)
+  
+  yearCompare <- trimmedInstance[1,1] # holds the value of the prior hear to compare against, is reset at end of loop to the latest year
+  firstDate <- trimmedInstance[1,2] # holds the first date
+  
+  rowIndex <- NA
+  # Get first indiced of date to use in template for setting B or S
+  # rowIndex is the current date +1 in the template, which may be a bit confusing
+  # alternative is set 0 or not add 1 and then increment at start of loop
+  if(firstDate == "20061231") {
+    print("First date!") # This is the first possible date in the dataset, perhaps not good to hardcode... TODO - remove hardcoded date
+    rowIndex <- 1
+  } else {
+    print("Security data starts after 2006")
+    rowIndex <- which(securityTemplateBS$quarter == firstDate) + 1
+  }
+  
+  # Walk through rows, compare to last year, if change then alter depending on the date
+  for(i in 2:nrow(trimmedInstance)) {
+    if (yearCompare == trimmedInstance[i,1]) {
+      print("No change")
+    } else if (trimmedInstance[i,1] > yearCompare) {
+      print("Increase so +B")
+      securityBS[rowIndex, 1] <- 1
+    } else if (trimmedInstance[i,1] < yearCompare) {
+      print("Decrease so +S")
+      securityBS[rowIndex, 2] <- 1
+    }
+    yearCompare <- trimmedInstance[i, 1]
+    print(i)
+    rowIndex <- rowIndex + 1
+  }
+  
+  securityBS
+}
 
