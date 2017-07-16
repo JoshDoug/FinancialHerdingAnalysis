@@ -35,54 +35,32 @@ for(i in securityTickerLevels) {
 # After B & S are gathered for the security can then feed into the AF formula
 # After the AF formula is done can feed into herding formula
 
-# Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query
-indices <- which(iss.data$SecurityTicker == "RCI.B")
+# Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query - just for testing currently
+indices <- which(iss.data$SecurityTicker == "UNP")
 dataSubset <- iss.data[indices, ]
 dataSubset
 
-# Just for testing - ignore
-securityInstanceIndices <- which(dataSubset$InstitutionID == "000W5D-E")
-securityInstance <- dataSubset[securityInstanceIndices, ]
-securityInstance
-
-for(i in institutionLevels) {
-  securityInstanceIndices <- which(dataSubset$InstitutionID == i)
-  # print(securityInstanceIndices)
-  
-  if(length(securityInstanceIndices) != 0) {
-    print(cat("something here", i)) # Gross way off printint output - but just for testing - appends NULL so just ignore that
-  } else {
-    print(cat("nothing here", i))
-  }
-  
-  #securityInstance <- dataSubset[securityInstanceIndices, ]
-  # print(securityInstance)
-  
-  # securityBS <- walkSecurityInstance(securityInstance, securityTemplateBS)
-  # print(securityBS)
-  
-}
-
-securityBS <- walkSecurityInstance(securityInstance, securityTemplateBS)
-securityBS
-
+# Get B and S total for a security
 test <- getSecurityBS(securityTemplateBS)
+test
+
+
 
 # Get B and S for a security
 getSecurityBS <- function(securityTemplateBS) {
-  securityTotalBS = NA
+  securityTotalBS <- securityTemplateBS
   for(i in institutionLevels) {
     securityInstanceIndices <- which(dataSubset$InstitutionID == i)
     if(length(securityInstanceIndices) != 0) {
-      # print(cat("something here", i)) # Gross way off printint output - but just for testing - appends NULL so just ignore that
+      print(i)
       securityInstance <- dataSubset[securityInstanceIndices, ]
-      print(securityInstance)
+      #print(securityInstance)
       BSFORALL <- walkSecurityInstance(securityInstance, securityTemplateBS)
+      print(BSFORALL)
+      securityTotalBS$B <- securityTotalBS$B + BSFORALL$B
+      securityTotalBS$S <- securityTotalBS$S + BSFORALL$S
+      #print(securityTotalBS)
     }
-    #securityInstance <- dataSubset[securityInstanceIndices, ]
-    # print(securityInstance)
-    # securityBS <- walkSecurityInstance(securityInstance, securityTemplateBS)
-    # print(securityBS)
   }
   return(securityTotalBS)
 }
@@ -91,8 +69,7 @@ getSecurityBS <- function(securityTemplateBS) {
 walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
   securityBS <- securityTemplateBS # Create new object copy of template - don't want to alter original template
   trimmedInstance <- securityInstance[, 3:4] # could be trimmed earlier, not *really* necessary to trim at all
-  print(trimmedInstance)
-  
+
   yearCompare <- trimmedInstance[1, "SharesHeld"] # holds the value of the prior year to compare against, is reset at end of loop to the latest year
   firstDate <- trimmedInstance[1, "ReportDate"] # holds the first date
   
@@ -108,23 +85,22 @@ walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
     rowIndex <- which(securityTemplateBS$quarter == firstDate) + 1
   }
   
-  if(nrow(trimmedInstance) > 1) {
+  if(nrow(trimmedInstance) > 1) { # Ignore any data subset that is 1 row or less
     # Walk through rows, compare to last year, if change then alter depending on the date
     for(i in 2:nrow(trimmedInstance)) {
       if (yearCompare == trimmedInstance[i,1]) {
-        print("No change")
+        #print("No change")
       } else if (trimmedInstance[i,1] > yearCompare) {
-        print("Increase so +B")
+        #print("Increase so +B")
         securityBS[rowIndex, 1] <- 1
       } else if (trimmedInstance[i,1] < yearCompare) {
-        print("Decrease so +S")
+        #print("Decrease so +S")
         securityBS[rowIndex, 2] <- 1
       }
       yearCompare <- trimmedInstance[i, 1]
       rowIndex <- rowIndex + 1
     }
   } # Otherwise the blank template is returned, which is accurate
-  
   return(securityBS)
 }
 
