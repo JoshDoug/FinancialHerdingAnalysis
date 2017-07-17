@@ -24,8 +24,15 @@ securityTemplateBS <- data.frame(B = rep(0, times = length(quarterDates)), S = r
 securityTemplateBS <- securityTemplateBS[-1,] # Remove first row as it is unused for B and S
 
 # This will form the main loop which will work through each security and delegate specific parts to other functions
+allSecuritiesTemplate <- data.frame(rep(securityTemplateBS, times = length(securityTickerLevels)))
+str(allSecuritiesTemplate)
+allSecuritiesBS <- data.frame(securityTickerLevels, allSecuritiesTemplate)
+str(allSecuritiesBS)
 for(i in securityTickerLevels) {
   print(i)
+  indices <- which(iss.data$SecurityTicker == i)
+  dataSubset <- iss.data[indices, ]
+  testAll <- getSecurityBS(securityTemplateBS)
 }
 
 # Okay lets do a test run with UNP and then integrate the rest of them using above loop
@@ -36,9 +43,16 @@ for(i in securityTickerLevels) {
 # After the AF formula is done can feed into herding formula
 
 # Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query - just for testing currently
-indices <- which(iss.data$SecurityTicker == "UNP")
+indices <- which(iss.data$SecurityTicker == "TCM")
 dataSubset <- iss.data[indices, ]
 dataSubset
+
+fixIndices <- which(dataSubset$InstitutionID == "00BQTS-E")
+fixSubset  <- dataSubset[fixIndices, ]
+fixSubset
+fixSubset <- fixSubset[order(fixSubset$ReportDate), ] # Reorder by date - just in case the dates are out of order!
+fixSubset
+help(order)
 
 # Get B and S total for a security
 test <- getSecurityBS(securityTemplateBS)
@@ -66,6 +80,7 @@ getSecurityBS <- function(securityTemplateBS) {
 walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
   securityBS <- securityTemplateBS # Create new object copy of template - don't want to alter original template
   trimmedInstance <- securityInstance[, 3:4] # could be trimmed earlier, not *really* necessary to trim at all
+  trimmedInstance <- trimmedInstance[order(trimmedInstance$ReportDate), ]
 
   yearCompare <- trimmedInstance[1, "SharesHeld"] # holds the value of the prior year to compare against, is reset at end of loop to the latest year
   firstDate <- trimmedInstance[1, "ReportDate"] # holds the first date
