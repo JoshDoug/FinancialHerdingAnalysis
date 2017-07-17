@@ -23,9 +23,11 @@ quarterDates <- dateLevels # Currently just leave as Strings
 securityTemplateBS <- data.frame(B = rep(0, times = length(quarterDates)), S = rep(0, times = length(quarterDates)), quarter = quarterDates)
 securityTemplateBS <- securityTemplateBS[-1,] # Remove first row as it is unused for B and S
 
-# This will form the main loop which will work through each security and delegate specific parts to other functions
+# Create empty list to hold every BS value per quarter for every Security
 p.list <- list(TEMP = securityTemplateBS) # Set up empty List
 p.increment <- 1 # Set counter to use for list - might be able to use the for loop temp var i as a counter instead?
+
+# This will form the main loop which will work through each security and delegate specific parts to other functions
 for(i in securityTickerLevels) {
   print(i)
   indices <- which(iss.data$SecurityTicker == i)
@@ -39,7 +41,8 @@ for(i in securityTickerLevels) {
   p.increment <- p.increment + 1
 }
 
-p.list # This now holds the BS for every security which can be used to calculate p!
+# This now holds the BS for every security which can be used to calculate p!
+p.list # The length of the final list if 4377, same as the number of different security tickers - looks good
 
 ######### Start Testing Code
 
@@ -88,14 +91,14 @@ walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
   firstDate <- trimmedInstance[1, "ReportDate"] # holds the first date
   
   rowIndex <- NA
-  # Get first indiced of date to use in template for setting B or S
+  # Get first index of date to use in template for setting B or S
   # rowIndex is the current date +1 in the template, which may be a bit confusing
   # alternative is set 0 or not add 1 and then increment at start of loop
   if(firstDate == quarterDates[1]) {
-    #print("First date!") # This is the first possible date in the dataset - relies on quarterDates vector being global
+    # This is the first possible date in the dataset - relies on quarterDates vector being global
     rowIndex <- 1
   } else {
-    #print("Security data starts after 2006")
+    # The first row for this dataset starts after the first possible date for a dataset
     rowIndex <- which(securityTemplateBS$quarter == firstDate) + 1
   }
   
@@ -103,18 +106,16 @@ walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
     # Walk through rows, compare to last year, if change then alter depending on the date
     for(i in 2:nrow(trimmedInstance)) {
       if (yearCompare == trimmedInstance[i,1]) {
-        #print("No change")
+        # No change, do nothing
       } else if (trimmedInstance[i,1] > yearCompare) {
-        #print("Increase so +B")
-        securityBS[rowIndex, 1] <- 1
+        securityBS[rowIndex, 1] <- 1 # Shares held increased, so +B
       } else if (trimmedInstance[i,1] < yearCompare) {
-        #print("Decrease so +S")
-        securityBS[rowIndex, 2] <- 1
+        securityBS[rowIndex, 2] <- 1 # Shares held decreased, so +S
       }
       yearCompare <- trimmedInstance[i, 1]
       rowIndex <- rowIndex + 1
     }
-  } # Otherwise the blank template is returned, which is accurate
+  } # Else do nothing and the blank template gets returned, which is fine
   return(securityBS)
 }
 
