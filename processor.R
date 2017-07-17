@@ -24,16 +24,22 @@ securityTemplateBS <- data.frame(B = rep(0, times = length(quarterDates)), S = r
 securityTemplateBS <- securityTemplateBS[-1,] # Remove first row as it is unused for B and S
 
 # This will form the main loop which will work through each security and delegate specific parts to other functions
-allSecuritiesTemplate <- data.frame(rep(securityTemplateBS, times = length(securityTickerLevels)))
-str(allSecuritiesTemplate)
-allSecuritiesBS <- data.frame(securityTickerLevels, allSecuritiesTemplate)
-str(allSecuritiesBS)
+p.list <- list(TEMP = securityTemplateBS) # Set up empty List
+p.increment <- 1 # Set counter to use for list - might be able to use the for loop temp var i as a counter instead?
 for(i in securityTickerLevels) {
   print(i)
   indices <- which(iss.data$SecurityTicker == i)
   dataSubset <- iss.data[indices, ]
-  testAll <- getSecurityBS(securityTemplateBS)
+  tempSecurityBS <- getSecurityBS(securityTemplateBS)
+  
+  # Set up p
+  p.list[[p.increment]] <- tempSecurityBS
+  names(p.list)[p.increment] <- i
+  
+  p.increment <- p.increment + 1
 }
+
+p.list # This now holds the BS for every security which can be used to calculate p!
 
 # Okay lets do a test run with UNP and then integrate the rest of them using above loop
 # Grab all rows for the current security and put in a data frame subset
@@ -42,22 +48,47 @@ for(i in securityTickerLevels) {
 # After B & S are gathered for the security can then feed into the AF formula
 # After the AF formula is done can feed into herding formula
 
+
+######### Start Testing Code
+
+# Set up a data frame to hold every BS result for each quarter for each security
+# initially is an empty template with quarter names and quarters and then zeroed data for B and S
+allSecuritiesTemplate <- data.frame(rep(securityTemplateBS, times = length(securityTickerLevels)))
+str(allSecuritiesTemplate)
+allSecuritiesBS <- data.frame(securityTickerLevels, allSecuritiesTemplate)
+str(allSecuritiesBS)
+
+testFrame <- data.frame(security.ticker = "UNP", security.BS.data = securityTemplateBS)
+testFrame[nrow(testFrame) +1,] = c("UNP", securityTemplateBS)
+
 # Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query - just for testing currently
 indices <- which(iss.data$SecurityTicker == "TCM")
 dataSubset <- iss.data[indices, ]
 dataSubset
 
 fixIndices <- which(dataSubset$InstitutionID == "00BQTS-E")
-fixSubset  <- dataSubset[fixIndices, ]
-fixSubset
+fixSubset1  <- dataSubset[fixIndices, ]
+fixSubset2 <- fixSubset1
 fixSubset <- fixSubset[order(fixSubset$ReportDate), ] # Reorder by date - just in case the dates are out of order!
 fixSubset
 help(order)
+
+fixSubset1
+fixSubset2
+
+fixSubset <- list(TCM = fixSubset1)
+fixSubset[[2]] <- fixSubset2
+names(fixSubset)[2] <- "UNP"
+fixSubset
+
+testList <- list()
+testList[[nrow(testList)]] <- fixSubset1
 
 # Get B and S total for a security
 test <- getSecurityBS(securityTemplateBS)
 test
 
+######### End Testing Code
 
 
 # Get B and S for a security
