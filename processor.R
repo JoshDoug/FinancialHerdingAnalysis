@@ -1,5 +1,8 @@
 # Program to process and analyse financial data for herding
 
+# The general structure of this program is data is read in and initial data structures are created at the start of the script
+# then functions which are used to process the data are at the end, while the main loops that walk through the data are in the middle
+
 # Read in CSV Data
 iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # This is a data frame
 
@@ -29,10 +32,12 @@ p.increment <- 1 # Set counter to use for list - might be able to use the for lo
 
 # This will form the main loop which will work through each security and delegate specific parts to other functions
 for(i in securityTickerLevels) {
-  print(i)
+  print(i) # Print current security, useful for debugging conflicts etc
   indices <- which(iss.data$SecurityTicker == i)
   dataSubset <- iss.data[indices, ]
   tempSecurityBS <- getSecurityBS(securityTemplateBS)
+  
+  tempSecurityBS <- calculateBSandN(tempSecurityBS)
   
   # Set up p
   p.list[[p.increment]] <- tempSecurityBS
@@ -41,10 +46,27 @@ for(i in securityTickerLevels) {
   p.increment <- p.increment + 1
 }
 
-# This now holds the BS for every security which can be used to calculate p!
+# This now holds the BS for every security which can be used to calculate p for each quarter! This could probably be calculated in the prior loop...
+# Unsure whether this data can be consolidated earlier or if the singular B and S for each security per quarter will be necessary later on...
 p.list # The length of the final list if 4377, same as the number of different security tickers - looks good
 
+p.quarters <- calculateP(p.list) # Calculates p for each quarter
+
+p.quarters # Now have p for each quarter and the actual calculations can begin
+
 ######### Start Testing Code
+
+# Add N and BS columns to dataframe
+str(p.list[["UNP"]])
+p.list[["UNP"]]
+
+testAddCols <- p.list[["UNP"]]
+str(testAddCols)
+
+testAddCols <- calculateBSandN(testAddCols)
+testAddCols
+
+p.list[["UNP"]] <- testAddCols
 
 # Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query - just for testing currently
 indices <- which(iss.data$SecurityTicker == "TCM")
@@ -64,18 +86,43 @@ test
 
 ######### End Testing Code
 
+# Calculate P
+calculateP <- function(p.list) {
+  # Hold p for each quarter...
+  p.quarters <- data.frame(p = rep(0, times = length(quarterDates)), quarter = quarterDates)
+  p.quarters <- p.quarters[-1,] # Remove first row
+  
+  for(name in names(p.list)) {
+    print(name)
+    print(p.list[[name]])
+    
+    security <- p.list[[name]]
+    p.quarters$p <- p.quarters$p + security$BS
+  }
+  
+  p.quarters$p <- p.quarters$p / length(securityTickerLevels)
+  return(p.quarters)
+}
+
+# Calculate B/B+S and N for each quarter of a security and add the rows to the data frame
+calculateBSandN <- function(securityBS) {
+  securityBS$BS <- unlist(securityBS$B / securityBS$B + securityBS$S) # Calculate B/B+S
+  securityBS$N <- unlist(securityBS$B + securityBS$S) # Calculate N = B + S
+  securityBS$BS[is.nan(securityBS$BS)] = 0 # Set any NaNs to 0
+  return(securityBS)
+}
 
 # Get B and S for a security
 getSecurityBS <- function(securityTemplateBS) {
   securityTotalBS <- securityTemplateBS
   for(i in institutionLevels) {
-    securityInstanceIndices <- which(dataSubset$InstitutionID == i)
-    if(length(securityInstanceIndices) != 0) {
-      print(i)
-      securityInstance <- dataSubset[securityInstanceIndices, ]
-      securityTempBS <- walkSecurityInstance(securityInstance, securityTemplateBS)
-      securityTotalBS$B <- securityTotalBS$B + securityTempBS$B
-      securityTotalBS$S <- securityTotalBS$S + securityTempBS$S
+    securityInstanceIndices <- which(dataSubset$InstitutionID == i) # Get all indices of a security for a particular security
+    if(length(securityInstanceIndices) != 0) { # Check that we actually got any indices - or this will throw an error
+      #print(i) # Print current institution, useful for 'debugging' conflicts etc
+      securityInstance <- dataSubset[securityInstanceIndices, ] # Get the rows back and then pass to the walkSecurity function to get it processed
+      securityTempBS <- walkSecurityInstance(securityInstance, securityTemplateBS) # Get B and S for each quarter of a security for a specific institution
+      securityTotalBS$B <- securityTotalBS$B + securityTempBS$B # In R you can just add two vectors together and it will add each equivalent value
+      securityTotalBS$S <- securityTotalBS$S + securityTempBS$S # So this just adds the number for B and S for each corresponding quarter together
     }
   }
   return(securityTotalBS)
