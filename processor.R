@@ -3,6 +3,8 @@
 # The general structure of this program is data is read in and initial data structures are created at the start of the script
 # then functions which are used to process the data are at the end, while the main loops that walk through the data are in the middle
 
+## Would be interesting to see if results change if securities were restricted to a minimum amount of rows and/or institutions?
+
 # Read in CSV Data
 iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # This is a data frame
 
@@ -54,6 +56,12 @@ p.quarters <- calculateP(p.list) # Calculates p for each quarter
 
 p.quarters # Now have p for each quarter and the actual calculations can begin
 
+for(name in names(p.list)) {
+  security <- p.list[[name]]
+  security <- calculateAFandH(security, p.quarters)
+  p.list[[name]] <- security
+}
+
 ######### Start Testing Code
 
 # Add N and BS columns to dataframe
@@ -84,7 +92,59 @@ help(order)
 test <- getSecurityBS(securityTemplateBS)
 test
 
+# dbinom takes the arguments x (k), size or x (N), prob (p)
+p.list[["UNP"]]
+# Test results for 1st relevant quarter of UNP, 2007-03-31
+# B = 2, S = 0, BS = 1, N = 2, p = 0.1133196
+dbinom(0, 0, 0.113)
+
+abs(0/2 - 0.1133196)
+help(dbinom)
+
+for(p.quarter in p.quarters) {
+  print(p.quarter)
+  #str(p.quarter)
+}
+
+testAFH <- p.list[["UNP"]]
+testAFH <- calculateAFandH(testAFH, p.quarters)
+testAFH
+
+length(testAFH$B)
+
 ######### End Testing Code
+
+# Calculate AF
+## This is calculated per security per quarter, so a single security will have an AF for each quarter which will then be used to calculate H
+calculateAFandH <- function(securityBS, p.quarters) {
+  securityBS$P <- unlist(p.quarters$p)
+  securityBS$AF <- unlist(rep(0, times = length(p.quarters$p)))
+  securityBS$H <- unlist(rep(0, times = length(p.quarters$p)))
+  #print(securityBS)
+  for(i in 1:nrow(p.quarters)) {
+    #print(securityBS[i,"P"])
+    AF <- calculateAFQuarter(securityBS[i, "N"], securityBS[i, "P"])
+    securityBS[i, "AF"] <- AF
+    print(AF)
+    
+    H <- calculateHQuarter(securityBS[i, "BS"], securityBS[i, "P"], AF)
+    securityBS[i, "H"] <- H
+  }
+  return(securityBS)
+}
+
+calculateHQuarter <- function(BS, p, AF) {
+  H <- abs(BS - p) - AF
+  return(H)
+}
+
+calculateAFQuarter <- function(N, p) {
+  AF <- 0
+  for(k in 0:N) {
+    AF <- AF + (dbinom(k, N, p) * abs((k/N) - p))
+  }
+  return(AF)
+}
 
 # Calculate P
 calculateP <- function(p.list) {
