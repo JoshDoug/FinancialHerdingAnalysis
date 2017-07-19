@@ -62,6 +62,19 @@ for(name in names(p.list)) {
   p.list[[name]] <- security
 }
 
+# Get H Average for each quarter
+h.quarters <- rep(0, times = length(p.quarters$p))
+
+for(name in names(p.list)) {
+  security <- p.list[[name]]
+  print(security$H)
+  security$H[is.nan(security$H)] = 0
+  h.quarters <- h.quarters + security$H
+}
+
+h.quarters <- h.quarters / length(securityTickerLevels)
+h.quarters
+
 ######### Start Testing Code
 
 # Add N and BS columns to dataframe
