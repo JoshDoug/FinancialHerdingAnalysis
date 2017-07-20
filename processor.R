@@ -6,7 +6,7 @@
 ## Would be interesting to see if results change if securities were restricted to a minimum amount of rows and/or institutions?
 
 # Read in CSV Data
-iss.data <- read.csv("allinstutions.csv", header = TRUE) # This is a data frame
+iss.data <- read.csv("AllInstitutions.csv", header = TRUE) # This is a data frame
 
 # Set up data
 ## Consolidate institutions into unique list - useful for looping through
@@ -91,10 +91,14 @@ testAddCols
 p.list[["UNP"]] <- testAddCols
 
 # Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query - just for testing currently
-indices <- which(iss.data$SecurityTicker == "G")
+indices <- which(iss.data$SecurityTicker == "K")
+indices <- which(iss.data$SecurityTicker == "CCO" & iss.data$InstitutionID == "07KRX4-E")
 dataSubset <- iss.data[indices, ]
 dataSubset
+
 fix <- getSecurityBS(securityTemplateBS, dataSubset)
+
+#options(max.print=1000000)
 
 
 fixIndices <- which(dataSubset$InstitutionID == "00BQTS-E")
@@ -192,10 +196,10 @@ calculateBSandN <- function(securityBS) {
 getSecurityBS <- function(securityTemplateBS, dataSubset) {
   securityTotalBS <- securityTemplateBS
   for(i in institutionLevels) {
-    print(i)
+    #print(i)
     securityInstanceIndices <- which(dataSubset$InstitutionID == i) # Get all indices of a security for a particular security
     if(length(securityInstanceIndices) != 0) { # Check that we actually got any indices - or this will throw an error
-      #print(i) # Print current institution, useful for 'debugging' conflicts etc
+      print(i) # Print current institution, useful for 'debugging' conflicts etc
       securityInstance <- dataSubset[securityInstanceIndices, ] # Get the rows back and then pass to the walkSecurity function to get it processed
       securityTempBS <- walkSecurityInstance(securityInstance, securityTemplateBS) # Get B and S for each quarter of a security for a specific institution
       securityTotalBS$B <- securityTotalBS$B + securityTempBS$B # In R you can just add two vectors together and it will add each equivalent value
