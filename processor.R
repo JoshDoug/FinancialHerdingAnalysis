@@ -6,7 +6,7 @@
 ## Would be interesting to see if results change if securities were restricted to a minimum amount of rows and/or institutions?
 
 # Read in CSV Data
-iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # This is a data frame
+iss.data <- read.csv("allinstutions.csv", header = TRUE) # This is a data frame
 
 # Set up data
 ## Consolidate institutions into unique list - useful for looping through
@@ -94,10 +94,8 @@ p.list[["UNP"]] <- testAddCols
 indices <- which(iss.data$SecurityTicker == "G")
 dataSubset <- iss.data[indices, ]
 dataSubset
+fix <- getSecurityBS(securityTemplateBS, dataSubset)
 
-dataSubset
-
-p.list[["UNP"]]
 
 fixIndices <- which(dataSubset$InstitutionID == "00BQTS-E")
 fixSubset  <- dataSubset[fixIndices, ]
@@ -194,6 +192,7 @@ calculateBSandN <- function(securityBS) {
 getSecurityBS <- function(securityTemplateBS, dataSubset) {
   securityTotalBS <- securityTemplateBS
   for(i in institutionLevels) {
+    print(i)
     securityInstanceIndices <- which(dataSubset$InstitutionID == i) # Get all indices of a security for a particular security
     if(length(securityInstanceIndices) != 0) { # Check that we actually got any indices - or this will throw an error
       #print(i) # Print current institution, useful for 'debugging' conflicts etc
