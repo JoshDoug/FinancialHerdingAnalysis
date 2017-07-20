@@ -37,7 +37,7 @@ for(i in securityTickerLevels) {
   print(i) # Print current security, useful for debugging conflicts etc
   indices <- which(iss.data$SecurityTicker == i)
   dataSubset <- iss.data[indices, ]
-  tempSecurityBS <- getSecurityBS(securityTemplateBS)
+  tempSecurityBS <- getSecurityBS(securityTemplateBS, dataSubset)
   
   tempSecurityBS <- calculateBSandN(tempSecurityBS)
   
@@ -77,8 +77,9 @@ h.quarters
 
 ######### Start Testing Code
 
-# Add N and BS columns to dataframe
 str(p.list[["UNP"]])
+
+
 p.list[["UNP"]]
 
 testAddCols <- p.list[["UNP"]]
@@ -90,9 +91,13 @@ testAddCols
 p.list[["UNP"]] <- testAddCols
 
 # Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query - just for testing currently
-indices <- which(iss.data$SecurityTicker == "TCM")
+indices <- which(iss.data$SecurityTicker == "G")
 dataSubset <- iss.data[indices, ]
 dataSubset
+
+dataSubset
+
+p.list[["UNP"]]
 
 fixIndices <- which(dataSubset$InstitutionID == "00BQTS-E")
 fixSubset  <- dataSubset[fixIndices, ]
@@ -133,7 +138,7 @@ calculateAFandH <- function(securityBS, p.quarters) {
   securityBS$P <- unlist(p.quarters$p)
   securityBS$AF <- unlist(rep(0, times = length(p.quarters$p)))
   securityBS$H <- unlist(rep(0, times = length(p.quarters$p)))
-  #print(securityBS)
+
   for(i in 1:nrow(p.quarters)) {
     #print(securityBS[i,"P"])
     AF <- calculateAFQuarter(securityBS[i, "N"], securityBS[i, "P"])
@@ -186,7 +191,7 @@ calculateBSandN <- function(securityBS) {
 }
 
 # Get B and S for a security
-getSecurityBS <- function(securityTemplateBS) {
+getSecurityBS <- function(securityTemplateBS, dataSubset) {
   securityTotalBS <- securityTemplateBS
   for(i in institutionLevels) {
     securityInstanceIndices <- which(dataSubset$InstitutionID == i) # Get all indices of a security for a particular security
