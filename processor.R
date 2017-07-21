@@ -12,51 +12,50 @@ securityTickerLevels <- levels(factor(iss.data$SecurityTicker)) # Consolidate se
 quarterDates <- levels(factor(iss.data$ReportDate)) # Holds dates of each quarter
 
 # Create a template data.frame to hold B and S for each security per institution and additional columns as the data is processed, remove first row
-securityTemplateBS <- data.frame(B = rep(0, times = length(quarterDates)), S = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
+securityTemplate <- data.frame(B = rep(0, times = length(quarterDates)), S = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
 
 # Create empty list to hold every security
-p.list <- list(TEMP = securityTemplateBS) # Set up empty List
-p.increment <- 1 # Set counter to use for list - might be able to use the for loop temp var i as a counter instead?
+security.list <- list(TEMP = securityTemplate) # Set up empty List
+security.increment <- 1 # Set counter to use for list - might be able to use the for loop temp var i as a counter instead?
 
-# This will form the main loop which will work through each security and delegate specific parts to other functions
+# The main loop which walks through each security and parses the data for B and S which can then be used to calculate everything
 for(i in securityTickerLevels) {
-  print(i) # Print current security, useful for debugging conflicts etc
+  #print(i) # Print current security, useful for debugging conflicts etc
   indices <- which(iss.data$SecurityTicker == i)
   dataSubset <- iss.data[indices, ]
-  tempSecurityBS <- getSecurityBS(securityTemplateBS, dataSubset)
-  tempSecurityBS <- calculateBSandN(tempSecurityBS)
+  tempSecurityBS <- getSecurityBS(securityTemplate, dataSubset) # Get B and S for each quarter for a security
+  tempSecurityBS <- calculateBSandN(tempSecurityBS) # Calculate N for each quarter for a security
   
   # Set up security
-  p.list[[p.increment]] <- tempSecurityBS
-  names(p.list)[p.increment] <- i
+  security.list[[security.increment]] <- tempSecurityBS # Add security to list
+  names(security.list)[security.increment] <- i # Add name of security to list
   
-  p.increment <- p.increment + 1
+  security.increment <- security.increment + 1
 }
 
-# This now holds the BS for every security which can be used to calculate p for each quarter! This could probably be calculated in the prior loop...
-# Unsure whether this data can be consolidated earlier or if the singular B and S for each security per quarter will be necessary later on...
-p.list # The length of the final list if 4377, same as the number of different security tickers - looks good
-
-p.quarters <- calculateP(p.list) # Calculates p for each quarter
-
+security.list # This now holds B, S, and N for every security so p can now be calculated for each quarter
+p.quarters <- calculateP(security.list) # Calculates p for each quarter
 p.quarters # Now have p for each quarter and the actual calculations can begin
 
-for(name in names(p.list)) {
-  security <- p.list[[name]]
+# Walk through each security and calculate AF and H for each quarter
+for(name in names(security.list)) {
+  security <- security.list[[name]]
   security <- calculateAFandH(security, p.quarters)
-  p.list[[name]] <- security
+  security.list[[name]] <- security
 }
 
-# Get H Average for each quarter
+# Set up H template
 h.quarters <- rep(0, times = length(p.quarters$p))
 
-for(name in names(p.list)) {
-  security <- p.list[[name]]
+# Get total of H for each quarter
+for(name in names(security.list)) {
+  security <- security.list[[name]]
   print(security$H)
   security$H[is.nan(security$H)] = 0
   h.quarters <- h.quarters + security$H
 }
 
+# Get average of H for each quarter
 h.quarters <- h.quarters / length(securityTickerLevels)
 h.quarters
 
