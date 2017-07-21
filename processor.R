@@ -5,30 +5,16 @@
 
 ## Would be interesting to see if results change if securities were restricted to a minimum amount of rows and/or institutions?
 
-# Read in CSV Data
-iss.data <- read.csv("AllInstitutions.csv", header = TRUE) # This is a data frame
-
 # Set up data
-## Consolidate institutions into unique list - useful for looping through
-institutions <- factor(iss.data$InstitutionID)
-institutionLevels <- levels(institutions)
+iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # Read in CSV Data into data frame
+institutionLevels <- levels(factor(iss.data$InstitutionID)) # Consolidate institutions into list and remove duplicates
+securityTickerLevels <- levels(factor(iss.data$SecurityTicker)) # Consolidate securities into list and remove duplicates
+quarterDates <- levels(factor(iss.data$ReportDate)) # Holds dates of each quarter
 
-## Consolidate security tickers into unique list
-securities <- factor(iss.data$SecurityTicker)
-securityTickerLevels <- levels(securities)
+# Create a template data.frame to hold B and S for each security per institution and additional columns as the data is processed, remove first row
+securityTemplateBS <- data.frame(B = rep(0, times = length(quarterDates)), S = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
 
-## Get dates can be converted into date format if needed
-dates <- factor(iss.data$ReportDate)
-dateLevels <- levels(dates)
-quarterDates <- dateLevels # Currently just leave as Strings
-# quarterDates <- as.Date(dateLevels, "%Y%m%d") # Convert into date objects - might cause more issues actually
-# dateFormat <- format(quarterDates, "%Y%b%d") # Not used, just an example of formatting a date
-
-# Create a template data.frame to hold B and S for each security per institution - then add together after
-securityTemplateBS <- data.frame(B = rep(0, times = length(quarterDates)), S = rep(0, times = length(quarterDates)), quarter = quarterDates)
-securityTemplateBS <- securityTemplateBS[-1,] # Remove first row as it is unused for B and S
-
-# Create empty list to hold every BS value per quarter for every Security
+# Create empty list to hold every security
 p.list <- list(TEMP = securityTemplateBS) # Set up empty List
 p.increment <- 1 # Set counter to use for list - might be able to use the for loop temp var i as a counter instead?
 
@@ -38,10 +24,9 @@ for(i in securityTickerLevels) {
   indices <- which(iss.data$SecurityTicker == i)
   dataSubset <- iss.data[indices, ]
   tempSecurityBS <- getSecurityBS(securityTemplateBS, dataSubset)
-  
   tempSecurityBS <- calculateBSandN(tempSecurityBS)
   
-  # Set up p
+  # Set up security
   p.list[[p.increment]] <- tempSecurityBS
   names(p.list)[p.increment] <- i
   
@@ -78,17 +63,7 @@ h.quarters
 ######### Start Testing Code
 
 str(p.list[["UNP"]])
-
-
 p.list[["UNP"]]
-
-testAddCols <- p.list[["UNP"]]
-str(testAddCols)
-
-testAddCols <- calculateBSandN(testAddCols)
-testAddCols
-
-p.list[["UNP"]] <- testAddCols
 
 # Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query - just for testing currently
 indices <- which(iss.data$SecurityTicker == "K")
@@ -100,17 +75,12 @@ fix <- getSecurityBS(securityTemplateBS, dataSubset)
 
 #options(max.print=1000000)
 
-
 fixIndices <- which(dataSubset$InstitutionID == "00BQTS-E")
 fixSubset  <- dataSubset[fixIndices, ]
 fixSubset <- fixSubset1
 fixSubset <- fixSubset[order(fixSubset$ReportDate), ] # Reorder by date - just in case the dates are out of order!
 fixSubset
 help(order)
-
-# Get B and S total for a security
-test <- getSecurityBS(securityTemplateBS)
-test
 
 # dbinom takes the arguments x (k), size or x (N), prob (p)
 p.list[["UNP"]]
