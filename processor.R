@@ -61,8 +61,7 @@ h.quarters
 
 ######### Start Testing Code
 
-str(p.list[["UNP"]])
-p.list[["UNP"]]
+security.list[["UNP"]]
 
 # Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query - just for testing currently
 indices <- which(iss.data$SecurityTicker == "UNP")
@@ -70,23 +69,10 @@ indices <- which(iss.data$SecurityTicker == "UNP")
 dataSubset <- iss.data[indices, ]
 dataSubset
 
-
-
-quarterDates
-
-#test.security <- walkSecurityInstance(dataSubset, securityTemplate)
 test.one.security.new <- getSecurityBS(securityTemplate, dataSubset)
 test.two.security.old <- getSecurityBSOld(securityTemplate, dataSubset)
-
 test.one.security.new
 test.two.security.old
-
-quarterDates[1]
-
-
-fix <- getSecurityBS(securityTemplateBS, dataSubset)
-
-#options(max.print=1000000)
 
 fixIndices <- which(dataSubset$InstitutionID == "00BQTS-E")
 fixSubset  <- dataSubset[fixIndices, ]
@@ -117,6 +103,7 @@ length(testAFH$B)
 
 ######### End Testing Code
 
+######### Functions
 # Calculate AF
 ## This is calculated per security per quarter, so a single security will have an AF for each quarter which will then be used to calculate H
 calculateAFandH <- function(securityBS, p.quarters) {
