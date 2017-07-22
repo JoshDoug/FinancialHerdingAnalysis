@@ -4,7 +4,7 @@
 # then functions which are used to process the data are at the end, while the main loops that walk through the data are in the middle
 # with some test code after
 
-# Set up data
+######### Set up data
 iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # Read in CSV Data into data frame
 institutionLevels <- levels(factor(iss.data$InstitutionID)) # Consolidate institutions into list and remove duplicates
 securityTickerLevels <- levels(factor(iss.data$SecurityTicker)) # Consolidate securities into list and remove duplicates
@@ -16,7 +16,9 @@ securityTemplate <- data.frame(B = rep(0, times = length(quarterDates)), S = rep
 # Create empty list to hold every security, in a name -> data.frame format
 security.list <- list(TEMP = securityTemplate) # Set up start of empty List which will be overwritten
 security.increment <- 1 # Set counter to use for list
+######### Finish reading in and setting up data structures
 
+######### Start of main program logic
 # Main loop - walks through each security and parses the data for B and S, and calculates B/B+S and N
 for(i in securityTickerLevels) {
   indices <- which(iss.data$SecurityTicker == i) # Get row numbers for current security
@@ -58,6 +60,7 @@ for(name in names(security.list)) {
 # Get average of H for each quarter
 h.quarters <- h.quarters / length(securityTickerLevels)
 h.quarters
+######### End of main program logic
 
 ######### Start Testing Code
 
@@ -194,3 +197,4 @@ walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
   } # Else do nothing and the blank template gets returned, which is fine
   return(securityBS)
 }
+######### End of functions
