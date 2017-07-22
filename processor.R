@@ -1,6 +1,6 @@
 # Program to process and analyse financial data for herding
 
-# The general structure of this program is data is read in and initial data structures are created at the start of the script
+# The general structure of this program is data is read in and create initial data structures at the start of the script
 # then functions which are used to process the data are at the end, while the main loops that walk through the data are in the middle
 
 ## Would be interesting to see if results change if securities were restricted to a minimum amount of rows and/or institutions?
@@ -9,7 +9,7 @@
 iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # Read in CSV Data into data frame
 institutionLevels <- levels(factor(iss.data$InstitutionID)) # Consolidate institutions into list and remove duplicates
 securityTickerLevels <- levels(factor(iss.data$SecurityTicker)) # Consolidate securities into list and remove duplicates
-quarterDates <- levels(factor(iss.data$ReportDate)) # Holds dates of each quarter
+quarterDates <- as.numeric(levels(factor(iss.data$ReportDate))) # Holds dates of each quarter
 
 # Create a template data.frame to hold B and S for each security per institution and additional columns as the data is processed, remove first row
 securityTemplate <- data.frame(B = rep(0, times = length(quarterDates)), S = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
@@ -65,10 +65,24 @@ str(p.list[["UNP"]])
 p.list[["UNP"]]
 
 # Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query - just for testing currently
-indices <- which(iss.data$SecurityTicker == "K")
-indices <- which(iss.data$SecurityTicker == "CCO" & iss.data$InstitutionID == "07KRX4-E")
+indices <- which(iss.data$SecurityTicker == "UNP")
+#indices <- which(iss.data$SecurityTicker == "UNP" & iss.data$InstitutionID == "07KRX4-E")
 dataSubset <- iss.data[indices, ]
 dataSubset
+
+
+
+quarterDates
+
+#test.security <- walkSecurityInstance(dataSubset, securityTemplate)
+test.one.security.new <- getSecurityBS(securityTemplate, dataSubset)
+test.two.security.old <- getSecurityBSOld(securityTemplate, dataSubset)
+
+test.one.security.new
+test.two.security.old
+
+quarterDates[1]
+
 
 fix <- getSecurityBS(securityTemplateBS, dataSubset)
 
@@ -168,7 +182,7 @@ getSecurityBS <- function(securityTemplateBS, dataSubset) {
     #print(i)
     securityInstanceIndices <- which(dataSubset$InstitutionID == i) # Get all indices of a security for a particular security
     if(length(securityInstanceIndices) != 0) { # Check that we actually got any indices - or this will throw an error
-      print(i) # Print current institution, useful for 'debugging' conflicts etc
+      #print(i) # Print current institution, useful for 'debugging' conflicts etc
       securityInstance <- dataSubset[securityInstanceIndices, ] # Get the rows back and then pass to the walkSecurity function to get it processed
       securityTempBS <- walkSecurityInstance(securityInstance, securityTemplateBS) # Get B and S for each quarter of a security for a specific institution
       securityTotalBS$B <- securityTotalBS$B + securityTempBS$B # In R you can just add two vectors together and it will add each equivalent value
@@ -182,37 +196,34 @@ getSecurityBS <- function(securityTemplateBS, dataSubset) {
 walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
   securityBS <- securityTemplateBS # Create new object copy of template - don't want to alter original template
   trimmedInstance <- securityInstance[, 3:4] # could be trimmed earlier, not *really* necessary to trim at all
-  trimmedInstance <- trimmedInstance[order(trimmedInstance$ReportDate), ]
-
-  yearCompare <- trimmedInstance[1, "SharesHeld"] # holds the value of the prior year to compare against, is reset at end of loop to the latest year
-  firstDate <- trimmedInstance[1, "ReportDate"] # holds the first date
-  
-  rowIndex <- NA
-  # Get first index of date to use in template for setting B or S
-  # rowIndex is the current date +1 in the template, which may be a bit confusing
-  # alternative is set 0 or not add 1 and then increment at start of loop
-  if(firstDate == quarterDates[1]) {
-    # This is the first possible date in the dataset - relies on quarterDates vector being global
-    rowIndex <- 1
-  } else {
-    # The first row for this dataset starts after the first possible date for a dataset
-    rowIndex <- which(securityTemplateBS$quarter == firstDate) + 1
-  }
+  trimmedInstance <- trimmedInstance[order(trimmedInstance$ReportDate), ] # Order by date
   
   if(nrow(trimmedInstance) > 1) { # Ignore any data subset that is 1 row or less
-    # Walk through rows, compare to last year, if change then alter depending on the date
+    
+    yearCompare <- trimmedInstance[1, "SharesHeld"] # holds the value of the prior year to compare against, is reset at end of loop to the latest year
+    firstDate <- trimmedInstance[1, "ReportDate"] # holds the first date
+    
+    rowIndex <- NA
+    # Get first index of date to use in template for setting B or S
+    # rowIndex is the current date +1 in the template, which may be a bit confusing
+    # alternative is set 0 or not add 1 and then increment at start of loop
+    if(firstDate == quarterDates[1]) {
+      rowIndex <- 1 # First possible quarter - relies on quarterDates vector being global
+    } else {
+      # The first row for this dataset starts after the first possible date for a dataset
+      rowIndex <- which(securityTemplateBS$quarter == firstDate) + 1
+    }
+
     for(i in 2:nrow(trimmedInstance)) {
       if (yearCompare == trimmedInstance[i,1]) {
         # No change, do nothing
       } else if (trimmedInstance[i,1] > yearCompare) {
-        securityBS[rowIndex, 1] <- 1 # Shares held increased, so +B
+        securityBS[which(securityTemplateBS$quarter == trimmedInstance[i, "ReportDate"]), 1] <- 1 # Shares held increased, so +B
       } else if (trimmedInstance[i,1] < yearCompare) {
-        securityBS[rowIndex, 2] <- 1 # Shares held decreased, so +S
+        securityBS[which(securityTemplateBS$quarter == trimmedInstance[i, "ReportDate"]), 2] <- 1 # Shares held decreased, so +S
       }
       yearCompare <- trimmedInstance[i, 1]
-      rowIndex <- rowIndex + 1
     }
   } # Else do nothing and the blank template gets returned, which is fine
   return(securityBS)
 }
-
