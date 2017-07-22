@@ -6,6 +6,7 @@
 
 ######### Set up data
 iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # Read in CSV Data into data frame
+#iss.data <- read.csv("AllInstitutions.csv", header = TRUE) # Read in CSV Data into data frame
 institutionLevels <- levels(factor(iss.data$InstitutionID)) # Consolidate institutions into list and remove duplicates
 securityTickerLevels <- levels(factor(iss.data$SecurityTicker)) # Consolidate securities into list and remove duplicates
 quarterDates <- as.numeric(levels(factor(iss.data$ReportDate))) # Holds dates of each quarter
@@ -64,9 +65,9 @@ h.quarters
 
 ######### Start Testing Code
 
-security.list[["UNP"]]
+security.list[["K"]] # Security results to test against
 
-# Test B/B+S calculations
+## Test B/B+S calculations
 indices <- which(iss.data$SecurityTicker == "UNP") # Grab a security
 #indices <- which(iss.data$SecurityTicker == "UNP" & iss.data$InstitutionID == "07KRX4-E")
 dataSubset <- iss.data[indices, ]
@@ -75,18 +76,7 @@ testSecurityUNP <- getSecurityBS(securityTemplate, dataSubset)
 testSecurityUNP <- calculateBSandN(testSecurityUNP)
 testSecurityUNP # Optionally can round B/B+S value using round: round(result, 2) where 2 is for choosing 2 decimal points
 
-# dbinom takes the arguments x (k), size or x (N), prob (p)
-p.list[["UNP"]]
-# Test results for 1st relevant quarter of UNP, 2007-03-31
-# B = 2, S = 0, BS = 1, N = 2, p = 0.1133196
-dbinom(0, 0, 0.113)
-
-abs(0/2 - 0.1133196)
-help(dbinom)
-
-testAFH <- p.list[["UNP"]]
-testAFH <- calculateAFandH(testAFH, p.quarters)
-testAFH
+security.list[["UNP"]]
 
 ######### End Testing Code
 
@@ -118,7 +108,7 @@ calculateHQuarter <- function(BS, p, AF) {
 calculateAFQuarter <- function(N, p) {
   AF <- 0
   for(k in 0:N) {
-    AF <- AF + (dbinom(k, N, p) * abs((k/N) - p))
+    AF <- AF + (dbinom(k, N, p) * abs((k/N) - p)) # dbinom takes the arguments x (k), size (N), prob (p)
   }
   return(AF)
 }
