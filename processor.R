@@ -138,14 +138,10 @@ calculateAFQuarter <- function(N, p) {
 
 # Calculate P
 calculateP <- function(p.list) {
-  # Hold p for each quarter...
-  p.quarters <- data.frame(p = rep(0, times = length(quarterDates)), quarter = quarterDates)
-  p.quarters <- p.quarters[-1,] # Remove first row
-  
+  # Data structure to hold p for each quarter, first row is removed as it is not applicable
+  p.quarters <- data.frame(p = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
+
   for(name in names(p.list)) {
-    print(name)
-    print(p.list[[name]])
-    
     security <- p.list[[name]]
     p.quarters$p <- p.quarters$p + security$BS
   }
@@ -162,18 +158,16 @@ calculateBSandN <- function(securityBS) {
   return(securityBS)
 }
 
-# Get B and S for a security
+# Get B and S totals for a security
 getSecurityBS <- function(securityTemplateBS, dataSubset) {
-  securityTotalBS <- securityTemplateBS
-  for(i in institutionLevels) {
-    #print(i)
-    securityInstanceIndices <- which(dataSubset$InstitutionID == i) # Get all indices of a security for a particular security
+  securityTotalBS <- securityTemplateBS # Create copy of template, to avoid overriding contents of template
+  for(i in institutionLevels) { # Add each B and S for each quarter of a security, cumulatively per institution
+    securityInstanceIndices <- which(dataSubset$InstitutionID == i) # Get all indices (row numbers) of a security for a particular security
     if(length(securityInstanceIndices) != 0) { # Check that we actually got any indices - or this will throw an error
-      #print(i) # Print current institution, useful for 'debugging' conflicts etc
-      securityInstance <- dataSubset[securityInstanceIndices, ] # Get the rows back and then pass to the walkSecurity function to get it processed
+      securityInstance <- dataSubset[securityInstanceIndices, ] # Get the relevant rows
       securityTempBS <- walkSecurityInstance(securityInstance, securityTemplateBS) # Get B and S for each quarter of a security for a specific institution
-      securityTotalBS$B <- securityTotalBS$B + securityTempBS$B # In R you can just add two vectors together and it will add each equivalent value
-      securityTotalBS$S <- securityTotalBS$S + securityTempBS$S # So this just adds the number for B and S for each corresponding quarter together
+      securityTotalBS$B <- securityTotalBS$B + securityTempBS$B # Add B data to cumulative B total for security
+      securityTotalBS$S <- securityTotalBS$S + securityTempBS$S # Add S data to cumulative S total for security
     }
   }
   return(securityTotalBS)
@@ -182,18 +176,19 @@ getSecurityBS <- function(securityTemplateBS, dataSubset) {
 # Get B and S for a security of a single institution
 walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
   securityBS <- securityTemplateBS # Create new object copy of template - don't want to alter original template
-  trimmedInstance <- securityInstance[, 3:4] # could be trimmed earlier, not *really* necessary to trim at all
+  trimmedInstance <- securityInstance[, 3:4] # Remove columns holding Institution and Security names
   trimmedInstance <- trimmedInstance[order(trimmedInstance$ReportDate), ] # Order by date
   
   if(nrow(trimmedInstance) > 1) { # Ignore any data subset that is 1 row or less
     
-    yearCompare <- trimmedInstance[1, "SharesHeld"] # holds the value of the prior year to compare against, is reset at end of loop to the latest year
-    firstDate <- trimmedInstance[1, "ReportDate"] # holds the first date
+    yearCompare <- trimmedInstance[1, "SharesHeld"] # Holds the no. of shares held of the prior quarter, updated after each quarter to prior quarter
+    firstDate <- trimmedInstance[1, "ReportDate"] # Holds the first date for the shares held by an Institution for a particular Security
     
-    rowIndex <- NA
+    rowIndex <- NA # Needs to be set to a value outside of the if-else statement
     # Get first index of date to use in template for setting B or S
-    # rowIndex is the current date +1 in the template, which may be a bit confusing
-    # alternative is set 0 or not add 1 and then increment at start of loop
+    # rowIndex is the current date +1 in the template - because the rowIndex will be compared against the previous quarter
+    # The check against quarterDates[1] is because the first quarter could be a quarter earlier than in the template,
+    # which the first quarter was removed from. So 1 is actually equivalent to row 0 + 1, so the + 1 for the if is implicit
     if(firstDate == quarterDates[1]) {
       rowIndex <- 1 # First possible quarter - relies on quarterDates vector being global
     } else {
@@ -201,9 +196,10 @@ walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
       rowIndex <- which(securityTemplateBS$quarter == firstDate) + 1
     }
 
+    # Starts from 2 because the shares held for row 1 is already in yearCompare to compare against
     for(i in 2:nrow(trimmedInstance)) {
       if (yearCompare == trimmedInstance[i,1]) {
-        # No change, do nothing
+        # No change, do nothing - 0 is the default value, so doesn't need to be set to 0
       } else if (trimmedInstance[i,1] > yearCompare) {
         securityBS[which(securityTemplateBS$quarter == trimmedInstance[i, "ReportDate"]), 1] <- 1 # Shares held increased, so +B
       } else if (trimmedInstance[i,1] < yearCompare) {
