@@ -2,8 +2,7 @@
 
 # The general structure of this program is data is read in and create initial data structures at the start of the script
 # then functions which are used to process the data are at the end, while the main loops that walk through the data are in the middle
-
-## Would be interesting to see if results change if securities were restricted to a minimum amount of rows and/or institutions?
+# with some test code after
 
 # Set up data
 iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # Read in CSV Data into data frame
@@ -14,15 +13,15 @@ quarterDates <- as.numeric(levels(factor(iss.data$ReportDate))) # Holds dates of
 # Create a template data.frame to hold B and S for each security per institution and additional columns as the data is processed, remove first row
 securityTemplate <- data.frame(B = rep(0, times = length(quarterDates)), S = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
 
-# Create empty list to hold every security
-security.list <- list(TEMP = securityTemplate) # Set up empty List
-security.increment <- 1 # Set counter to use for list - might be able to use the for loop temp var i as a counter instead?
+# Create empty list to hold every security, in a name -> data.frame format
+security.list <- list(TEMP = securityTemplate) # Set up start of empty List which will be overwritten
+security.increment <- 1 # Set counter to use for list
 
-# The main loop which walks through each security and parses the data for B and S which can then be used to calculate everything
+# Main loop - walks through each security and parses the data for B and S, and calculates B/B+S and N
 for(i in securityTickerLevels) {
-  #print(i) # Print current security, useful for debugging conflicts etc
-  indices <- which(iss.data$SecurityTicker == i)
-  dataSubset <- iss.data[indices, ]
+  indices <- which(iss.data$SecurityTicker == i) # Get row numbers for current security
+  dataSubset <- iss.data[indices, ] # Get rows for current security
+  
   tempSecurityBS <- getSecurityBS(securityTemplate, dataSubset) # Get B and S for each quarter for a security
   tempSecurityBS <- calculateBSandN(tempSecurityBS) # Calculate N for each quarter for a security
   
@@ -33,9 +32,10 @@ for(i in securityTickerLevels) {
   security.increment <- security.increment + 1
 }
 
-security.list # This now holds B, S, and N for every security so p can now be calculated for each quarter
 p.quarters <- calculateP(security.list) # Calculates p for each quarter
-p.quarters # Now have p for each quarter and the actual calculations can begin
+
+security.list # This now holds B, S, and N for every security
+p.quarters # Holds p for each quarter
 
 # Walk through each security and calculate AF and H for each quarter
 for(name in names(security.list)) {
@@ -69,18 +69,6 @@ indices <- which(iss.data$SecurityTicker == "UNP")
 dataSubset <- iss.data[indices, ]
 dataSubset
 
-test.one.security.new <- getSecurityBS(securityTemplate, dataSubset)
-test.two.security.old <- getSecurityBSOld(securityTemplate, dataSubset)
-test.one.security.new
-test.two.security.old
-
-fixIndices <- which(dataSubset$InstitutionID == "00BQTS-E")
-fixSubset  <- dataSubset[fixIndices, ]
-fixSubset <- fixSubset1
-fixSubset <- fixSubset[order(fixSubset$ReportDate), ] # Reorder by date - just in case the dates are out of order!
-fixSubset
-help(order)
-
 # dbinom takes the arguments x (k), size or x (N), prob (p)
 p.list[["UNP"]]
 # Test results for 1st relevant quarter of UNP, 2007-03-31
@@ -90,16 +78,9 @@ dbinom(0, 0, 0.113)
 abs(0/2 - 0.1133196)
 help(dbinom)
 
-for(p.quarter in p.quarters) {
-  print(p.quarter)
-  #str(p.quarter)
-}
-
 testAFH <- p.list[["UNP"]]
 testAFH <- calculateAFandH(testAFH, p.quarters)
 testAFH
-
-length(testAFH$B)
 
 ######### End Testing Code
 
