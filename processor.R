@@ -63,11 +63,14 @@ h.quarters
 
 security.list[["UNP"]]
 
-# Grab all rows from the data frame where security ticker equals UNP - similar to an SQL query - just for testing currently
-indices <- which(iss.data$SecurityTicker == "UNP")
+# Test B/B+S calculations
+indices <- which(iss.data$SecurityTicker == "UNP") # Grab a security
 #indices <- which(iss.data$SecurityTicker == "UNP" & iss.data$InstitutionID == "07KRX4-E")
 dataSubset <- iss.data[indices, ]
 dataSubset
+testSecurityUNP <- getSecurityBS(securityTemplate, dataSubset)
+testSecurityUNP <- calculateBSandN(testSecurityUNP)
+testSecurityUNP # Optionally can round B/B+S value using round: round(result, 2) where 2 is for choosing 2 decimal points
 
 # dbinom takes the arguments x (k), size or x (N), prob (p)
 p.list[["UNP"]]
@@ -133,9 +136,9 @@ calculateP <- function(p.list) {
 
 # Calculate B/B+S and N for each quarter of a security and add the rows to the data frame
 calculateBSandN <- function(securityBS) {
-  securityBS$BS <- unlist(securityBS$B / securityBS$B + securityBS$S) # Calculate B/B+S
+  securityBS$BS <- unlist(securityBS$B / (securityBS$B + securityBS$S)) # Calculate B/B+S - should this be rounded to 2 or 3 decimal places?
   securityBS$N <- unlist(securityBS$B + securityBS$S) # Calculate N = B + S
-  securityBS$BS[is.nan(securityBS$BS)] = 0 # Set any NaNs to 0
+  securityBS$BS[is.nan(securityBS$BS)] = 0 # Set any NaNs to 0 - where B and S are both 0
   return(securityBS)
 }
 
