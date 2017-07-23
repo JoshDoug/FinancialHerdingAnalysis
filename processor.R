@@ -53,7 +53,7 @@ h.quarters <- rep(0, times = length(p.quarters$p))
 # Get total of H for each quarter
 for(name in names(security.list)) {
   security <- security.list[[name]]
-  print(security$H)
+  #print(c(name, "H: ", security$H))
   security$H[is.nan(security$H)] = 0
   h.quarters <- h.quarters + security$H
 }
@@ -61,6 +61,8 @@ for(name in names(security.list)) {
 # Get average of H for each quarter
 h.quarters <- h.quarters / p.quarters$activeSecurities
 h.quarters
+
+sprintf("%f", h.quarters)
 ######### End of main program logic
 
 ######### Start Testing Code
@@ -99,7 +101,7 @@ calculateAFandH <- function(securityBS, p.quarters) {
     if(securityBS[i, "N"] > 0) { # Only calculate AF and H if N is greater than 0, if N is not greater than 0 then they remain at the default of 0
       AF <- calculateAFQuarter(securityBS[i, "N"], securityBS[i, "P"])
       securityBS[i, "AF"] <- AF
-      print(AF)
+      #print(c("AF: ", AF))
       
       H <- calculateHQuarter(securityBS[i, "BS"], securityBS[i, "P"], AF)
       securityBS[i, "H"] <- H
