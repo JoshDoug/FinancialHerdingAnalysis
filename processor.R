@@ -5,8 +5,8 @@
 # with some test code after
 
 ######### Set up data
-iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # Read in CSV Data into data frame
-#iss.data <- read.csv("AllInstitutions.csv", header = TRUE) # Read in CSV Data into data frame
+#iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # Read in CSV Data into data frame
+iss.data <- read.csv("AllInstitutions.csv", header = TRUE) # Read in CSV Data into data frame
 institutionLevels <- levels(factor(iss.data$InstitutionID)) # Consolidate institutions into list and remove duplicates
 securityTickerLevels <- levels(factor(iss.data$SecurityTicker)) # Consolidate securities into list and remove duplicates
 quarterDates <- as.numeric(levels(factor(iss.data$ReportDate))) # Holds dates of each quarter
@@ -37,7 +37,7 @@ for(i in securityTickerLevels) {
 
 p.quarters <- calculateP(security.list) # Calculates p for each quarter
 
-security.list # This now holds B, S, and N for every security
+#security.list # This now holds B, S, and N for every security
 p.quarters # Holds p for each quarter
 
 # Walk through each security and calculate AF and H for each quarter
@@ -61,9 +61,19 @@ for(name in names(security.list)) {
 # Get average of H for each quarter
 h.quarters <- h.quarters / p.quarters$activeSecurities
 h.quarters
-
-sprintf("%f", h.quarters)
 ######### End of main program logic
+
+######### Sample graphing code
+
+round.h <- round(h.quarters, 8) # 1 way of making results more human readable
+sprintf("%f", h.quarters) # 2nd way of making results human readable
+quarters <- as.Date(as.character(p.quarters$quarter), "%Y%m%d") # Make date values
+
+p.quarters
+
+plot(quarters, p.quarters$p, ylim= c(0,1))
+plot(quarters, round.h, ylim= c(-0.005,0.015))
+
 
 ######### Functions
 # Calculate AF
