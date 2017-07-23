@@ -65,30 +65,6 @@ h.quarters
 sprintf("%f", h.quarters)
 ######### End of main program logic
 
-######### Start Testing Code
-
-security.list[["K"]] # Security results to test against
-
-## Test B/B+S calculations
-indices <- which(iss.data$SecurityTicker == "UNP") # Grab a security
-#indices <- which(iss.data$SecurityTicker == "UNP" & iss.data$InstitutionID == "07KRX4-E")
-dataSubset <- iss.data[indices, ]
-dataSubset
-testSecurityUNP <- getSecurityBS(securityTemplate, dataSubset)
-testSecurityUNP <- calculateBSandN(testSecurityUNP)
-testSecurityUNP # Optionally can round B/B+S value using round: round(result, 2) where 2 is for choosing 2 decimal points
-
-security.list[["UNP"]]
-
-## Test totalling only active securities per quarter
-test.security.active <- security.list[["UNP"]]
-test.total <- ifelse(test.security.active$N > 0, 1, 0)
-test.total
-
-p.quarters
-
-######### End Testing Code
-
 ######### Functions
 # Calculate AF
 ## This is calculated per security per quarter, so a single security will have an AF for each quarter which will then be used to calculate H
@@ -199,3 +175,27 @@ walkSecurityInstance <- function(securityInstance, securityTemplateBS) {
   return(securityBS)
 }
 ######### End of functions
+
+######### Start Testing Code
+
+security.list[["K"]] # Security results to test against
+
+## Test B/B+S calculations
+indices <- which(iss.data$SecurityTicker == "UNP") # Grab a security
+#indices <- which(iss.data$SecurityTicker == "UNP" & iss.data$InstitutionID == "07KRX4-E")
+dataSubset <- iss.data[indices, ]
+dataSubset
+testSecurityUNP <- getSecurityBS(securityTemplate, dataSubset)
+testSecurityUNP <- calculateBSandN(testSecurityUNP)
+testSecurityUNP # Optionally can round B/B+S value using round: round(result, 2) where 2 is for choosing 2 decimal points
+
+security.list[["UNP"]]
+
+## Test totalling only active securities per quarter
+test.security.active <- security.list[["UNP"]]
+test.total <- ifelse(test.security.active$N > 0, 1, 0)
+test.total
+
+p.quarters
+
+######### End Testing Code
