@@ -89,13 +89,14 @@ calculateAFandH <- function(securityBS, p.quarters) {
   securityBS$H <- unlist(rep(0, times = length(p.quarters$p)))
 
   for(i in 1:nrow(p.quarters)) {
-    #print(securityBS[i,"P"])
-    AF <- calculateAFQuarter(securityBS[i, "N"], securityBS[i, "P"])
-    securityBS[i, "AF"] <- AF
-    print(AF)
-    
-    H <- calculateHQuarter(securityBS[i, "BS"], securityBS[i, "P"], AF)
-    securityBS[i, "H"] <- H
+    if(securityBS[i, "N"] > 0) { # Only calculate AF and H if N is greater than 0, if N is not greater than 0 then they remain at the default of 0
+      AF <- calculateAFQuarter(securityBS[i, "N"], securityBS[i, "P"])
+      securityBS[i, "AF"] <- AF
+      print(AF)
+      
+      H <- calculateHQuarter(securityBS[i, "BS"], securityBS[i, "P"], AF)
+      securityBS[i, "H"] <- H
+    }
   }
   return(securityBS)
 }
