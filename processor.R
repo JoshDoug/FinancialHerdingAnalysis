@@ -59,7 +59,7 @@ for(name in names(security.list)) {
 }
 
 # Get average of H for each quarter
-h.quarters <- h.quarters / length(securityTickerLevels)
+h.quarters <- h.quarters / p.quarters$activeSecurities
 h.quarters
 ######### End of main program logic
 
@@ -77,6 +77,13 @@ testSecurityUNP <- calculateBSandN(testSecurityUNP)
 testSecurityUNP # Optionally can round B/B+S value using round: round(result, 2) where 2 is for choosing 2 decimal points
 
 security.list[["UNP"]]
+
+## Test totalling only active securities per quarter
+test.security.active <- security.list[["UNP"]]
+test.total <- ifelse(test.security.active$N > 0, 1, 0)
+test.total
+
+p.quarters
 
 ######### End Testing Code
 
@@ -117,14 +124,15 @@ calculateAFQuarter <- function(N, p) {
 # Calculate P
 calculateP <- function(p.list) {
   # Data structure to hold p for each quarter, first row is removed as it is not applicable
-  p.quarters <- data.frame(p = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
+  p.quarters <- data.frame(p = rep(0, times = length(quarterDates)), activeSecurities = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
 
   for(name in names(p.list)) {
     security <- p.list[[name]]
     p.quarters$p <- p.quarters$p + security$BS
+    p.quarters$activeSecurities <- p.quarters$activeSecurities + ifelse(security$N > 0, 1, 0)
   }
   
-  p.quarters$p <- p.quarters$p / length(securityTickerLevels)
+  p.quarters$p <- p.quarters$p / p.quarters$activeSecurities
   return(p.quarters)
 }
 
