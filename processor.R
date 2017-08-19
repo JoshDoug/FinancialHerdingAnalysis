@@ -5,11 +5,14 @@
 # with some test code after
 
 ######### Set up data
+getwd()
 #iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # Read in CSV Data into data frame
-iss.data <- read.csv("AllInstitutions.csv", header = TRUE) # Read in CSV Data into data frame
+iss.data <- read.csv("data/ValueInstitutionsDataset.csv", header = TRUE) # Read in CSV Data into data frame
 institutionLevels <- levels(factor(iss.data$InstitutionID)) # Consolidate institutions into list and remove duplicates
 securityTickerLevels <- levels(factor(iss.data$SecurityTicker)) # Consolidate securities into list and remove duplicates
 quarterDates <- as.numeric(levels(factor(iss.data$ReportDate))) # Holds dates of each quarter
+
+quarterDates
 
 # Create a template data.frame to hold B and S for each security per institution and additional columns as the data is processed, remove first row
 securityTemplate <- data.frame(B = rep(0, times = length(quarterDates)), S = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
@@ -50,7 +53,7 @@ for(name in names(security.list)) {
 # Set up H template
 h.quarters <- rep(0, times = length(p.quarters$p))
 
-# Get total of H for each quarter
+# Get total of H for each quarter - Invalidated by steps for getting Standard Deviation
 for(name in names(security.list)) {
   security <- security.list[[name]]
   #print(c(name, "H: ", security$H))
@@ -60,7 +63,44 @@ for(name in names(security.list)) {
 
 # Get average of H for each quarter
 h.quarters <- h.quarters / p.quarters$activeSecurities
+
+# Get Standard Deviation for each quarter
+## - either need to get a vector of h values for each quarter where a security is active (ie not Nan or 0)
+## - or loop through each security again and manually work out with simple own version of standard deviation formula...
+security.h.quarters <- data.frame(matrix(ncol = length(quarterDates[-1]), nrow = 0))
+colnames(security.h.quarters) <- quarterDates[-1]
+
+security.h.quarters
+security.list[["B"]]$H
+security.h.quarters[1,] <- testH$H
+str(security.h.quarters)
+
+security.increment <- 1 # Set counter to use for list
+for(name in names(security.list)) {
+  security.h.quarters[security.increment,] <- security.list[[name]]$H
+  security.increment <- security.increment + 1
+}
+
+# Set any 0 values to NA so that they can be averaged by ignoring 0 values and thus only take into account active securities
+security.h.quarters[security.h.quarters ==0] <- NA
+sum(security.h.quarters$`20070331`, na.rm = TRUE) # Ignore NA/null values, these aren't taken into account for the totals either which is important
+mean(security.h.quarters$`20070331`, na.rm = TRUE)
+colMeans(security.h.quarters, na.rm = TRUE)
+sd(security.h.quarters$`20070630`, na.rm = TRUE)
+
+sd.quarters <- data.frame(hAvg = rep(0, times = length(quarterDates)), std = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
+
+sd.quarters$hAvg <- colMeans(security.h.quarters, na.rm = TRUE)
+
+for(name in names(security.h.quarters)) {
+  #sd.quarters <- within(sd.quarters, std[quarter == j] <- sd(j, na.rm = TRUE))
+  sd.quarters[sd.quarters$quarter == name, "std"] <- sd(security.h.quarters[,name], na.rm = TRUE)
+  print(name)
+}
+
+sd.quarters
 h.quarters
+
 ######### End of main program logic
 
 ######### Sample graphing code
