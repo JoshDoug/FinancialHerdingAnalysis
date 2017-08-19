@@ -6,7 +6,7 @@
 
 ######### Set up data
 #iss.data <- read.csv("InstitutionSecuritiesDataset.csv", header = TRUE) # Read in CSV Data into data frame
-iss.data <- read.csv("data/ValueInstitutionsDataset.csv", header = TRUE) # Read in CSV Data into data frame
+iss.data <- read.csv("data/AllInstitutions.csv", header = TRUE) # Read in CSV Data into data frame
 institutionLevels <- levels(factor(iss.data$InstitutionID)) # Consolidate institutions into list and remove duplicates
 securityTickerLevels <- levels(factor(iss.data$SecurityTicker)) # Consolidate securities into list and remove duplicates
 quarterDates <- as.numeric(levels(factor(iss.data$ReportDate))) # Holds dates of each quarter
@@ -60,18 +60,18 @@ for(name in names(security.list)) {
 }
 
 # Set any 0 values to NA so that they can be averaged by ignoring 0 values and thus only take into account active securities
-security.h.quarters[security.h.quarters ==0] <- NA
-sd.quarters <- data.frame(hAvg = rep(0, times = length(quarterDates)), std = rep(0, times = length(quarterDates)), quarter = quarterDates)[-1,]
+security.h.quarters[security.h.quarters == 0] <- NA
+sd.quarters <- data.frame(quarter = quarterDates, hAvg = rep(0, times = length(quarterDates)), std = rep(0, times = length(quarterDates)), se = rep(0, times = length(quarterDates)), activeTotal = rep(0, times = length(quarterDates)))[-1,]
 sd.quarters$hAvg <- colMeans(security.h.quarters, na.rm = TRUE)
 
 for(name in names(security.h.quarters)) {
-  sd.quarters[sd.quarters$quarter == name, "std"] <- sd(security.h.quarters[,name], na.rm = TRUE)
-  print(name)
+  hValues <- security.h.quarters[,name]
+  sd.quarters[sd.quarters$quarter == name, "std"] <- sd(hValues, na.rm = TRUE)
+  sd.quarters[sd.quarters$quarter == name, "se"] <- sd(hValues, na.rm = TRUE) / sqrt(length(hValues[!is.na(hValues)]))
+  sd.quarters[sd.quarters$quarter == name, "activeTotal"] <- length(hValues[!is.na(hValues)])
 }
 
-sd.quarters$p <- p.quarters$p
-sd.quarters$activeTotal <- p.quarters$activeSecurities
-
+sd.quarters$p <- p.quarters$p # Add P values so quarter data is in a single place
 sd.quarters # Hold all the potentially useful values and info
 
 ######### End of main program logic
