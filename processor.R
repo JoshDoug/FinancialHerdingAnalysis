@@ -73,6 +73,7 @@ for(name in names(security.h.quarters)) {
 
 sd.quarters$p <- p.quarters$p # Add P values so quarter data is in a single place
 sd.quarters # Hold all the potentially useful values and info
+p.quarters
 
 ######### End of main program logic
 
@@ -132,7 +133,7 @@ calculateP <- function(p.list) {
     p.quarters$p <- p.quarters$p + security$BS
     p.quarters$activeSecurities <- p.quarters$activeSecurities + ifelse(security$N > 0, 1, 0)
   }
-  
+  print(p.quarters$p)
   p.quarters$p <- p.quarters$p / p.quarters$activeSecurities
   return(p.quarters)
 }
